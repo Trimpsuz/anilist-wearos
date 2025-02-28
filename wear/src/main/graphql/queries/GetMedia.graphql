@@ -1,0 +1,19 @@
+query GetMedia($ids: [Int]) {
+  Page {
+    media(id_in: $ids) {
+      id
+      title {
+        userPreferred
+      }
+      episodes
+      chapters
+        coverImage {
+          medium
+        }
+      mediaListEntry {
+		id
+        progress
+      }
+    }
+  }
+}

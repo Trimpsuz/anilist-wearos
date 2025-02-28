@@ -1,0 +1,10 @@
+query GetMediaStatus($ids: [Int]) {
+  Page {
+    media(id_in: $ids) {
+      id
+      mediaListEntry {
+        status
+      }
+    }
+  }
+}
