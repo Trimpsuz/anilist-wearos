@@ -93,23 +93,28 @@ class MainTileService : SuspendingTileService() {
     ): TileBuilders.Tile {
         if(requestParams.currentState.lastClickableId.startsWith("ID_CLICK_ADD")) {
             val mediaId = requestParams.currentState.lastClickableId.split(":")[1]
-            val entryId = requestParams.currentState.lastClickableId.split(":")[2].toInt()
-            val progress = requestParams.currentState.lastClickableId.split(":")[3].toInt() + 1
-            val total: Int? = if(requestParams.currentState.lastClickableId.split(":")[4] != "null") requestParams.currentState.lastClickableId.split(":")[4].toInt() else null
 
             withContext(Dispatchers.IO) {
-                updateMediaProgress(apolloClient, entryId, progress)
+                val media = fetchMedia(apolloClient, listOf(mediaId.toInt()))?.get(0)
+                val entryId = media?.mediaListEntry?.id
+                val progress = media?.mediaListEntry?.progress?.plus(1)
 
-                if(total != null && progress >= total) {
-                    val selectedMedia = dataStoreRepository.selectedMedia.firstBlocking()?.toList() ?: emptyList()
+                if(entryId != null && progress != null) {
+                    updateMediaProgress(apolloClient, entryId, progress)
 
-                    if(selectedMedia.isNotEmpty()) {
-                        val newSelectedMedia = selectedMedia.filter { it != mediaId }.toSet()
-                        sendToMobile("list", newSelectedMedia.toString(), applicationContext)
-                        dataStoreRepository.setSelectedMedia(newSelectedMedia)
-                        val imageFiles = filesDir.listFiles { file -> file.extension == "png"}
-                        imageFiles?.forEach { file ->
-                            if(!newSelectedMedia.contains(file.nameWithoutExtension)) file.delete()
+                    val total: Int? = media.episodes ?: media.chapters
+
+                    if(total != null && progress >= total) {
+                        val selectedMedia = dataStoreRepository.selectedMedia.firstBlocking()?.toList() ?: emptyList()
+
+                        if(selectedMedia.isNotEmpty()) {
+                            val newSelectedMedia = selectedMedia.filter { it != mediaId }.toSet()
+                            sendToMobile("list", newSelectedMedia.toString(), applicationContext)
+                            dataStoreRepository.setSelectedMedia(newSelectedMedia)
+                            val imageFiles = filesDir.listFiles { file -> file.extension == "png"}
+                            imageFiles?.forEach { file ->
+                                if(!newSelectedMedia.contains(file.nameWithoutExtension)) file.delete()
+                            }
                         }
                     }
                 }
@@ -161,8 +166,7 @@ class MainTileService : SuspendingTileService() {
         val mediaMap = mediaList.associate { media ->
             val total = media?.episodes ?: media?.chapters
             val progress = media?.mediaListEntry?.progress
-            val entryId = media?.mediaListEntry?.id
-            (media?.id ?: 0) to Triple(progress, total, entryId)
+            (media?.id ?: 0) to Pair(progress, total)
         }
 
         withContext(Dispatchers.IO) {
@@ -192,8 +196,8 @@ class MainTileService : SuspendingTileService() {
                     .addContent(
                         LayoutElementBuilders.Row.Builder().apply {
                             selectedMediaIds.forEachIndexed { index, mediaId ->
-                                val (progress, total, entryId) = mediaMap[mediaId.toInt()]
-                                    ?: Triple(null, null, null)
+                                val (progress, total) = mediaMap[mediaId.toInt()]
+                                    ?: Pair(null, null)
                                 if (index in 1..2) {
                                     addContent(
                                         Spacer.Builder().setWidth(DimensionBuilders.dp(4f)).build()
@@ -410,7 +414,7 @@ class MainTileService : SuspendingTileService() {
                                                                         )
                                                                         .setClickable(
                                                                             Clickable.Builder()
-                                                                                .setId("ID_CLICK_ADD:$mediaId:$entryId:$progress:$total")
+                                                                                .setId("ID_CLICK_ADD:$mediaId")
                                                                                 .setOnClick(
                                                                                     ActionBuilders.LoadAction.Builder()
                                                                                         .build()
