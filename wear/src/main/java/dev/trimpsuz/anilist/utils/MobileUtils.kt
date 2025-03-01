@@ -3,19 +3,17 @@ package dev.trimpsuz.anilist.utils
 import android.content.Context
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.Wearable
-import kotlinx.coroutines.runBlocking
 
 fun sendToMobile(path: String, data: String, context: Context) {
-    runBlocking {
-        val nodes = getNodes(context)
-        if(nodes.isNotEmpty()) {
-            nodes.first().also {nodeId ->
-                Wearable.getMessageClient(context).sendMessage(
-                    nodeId,
-                    "/$path",
-                    data.toByteArray()
-                )
-            }
+    val nodes = getNodes(context)
+
+    if(nodes.isNotEmpty()) {
+        nodes.first().also {nodeId ->
+            Wearable.getMessageClient(context).sendMessage(
+                nodeId,
+                "/$path",
+                data.toByteArray()
+            )
         }
     }
 }

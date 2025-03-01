@@ -4,15 +4,14 @@ import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Optional
 import dev.trimpsuz.anilist.GetMediaQuery
 import dev.trimpsuz.anilist.SaveMediaListEntryMutation
-import kotlinx.coroutines.runBlocking
 
-suspend fun fetchMedia(apolloClient: ApolloClient, ids: List<Int>): List<GetMediaQuery. Medium?>?  {
+suspend fun fetchMedia(apolloClient: ApolloClient, ids: List<Int>): List<GetMediaQuery. Medium?>? {
     val response = apolloClient.query(GetMediaQuery(Optional.presentIfNotNull(ids))).execute()
 
     return response.data?.Page?.media
 }
 
-fun updateMediaProgress(apolloClient: ApolloClient, entryId: Int, newProgress: Int) = runBlocking {
+suspend fun updateMediaProgress(apolloClient: ApolloClient, entryId: Int, newProgress: Int) {
     val response = apolloClient.mutation(
         SaveMediaListEntryMutation(
             Optional.present(entryId),
