@@ -40,7 +40,7 @@ An AniList client to track anime and manga from your WearOS device.
 ### Using the Tile
 - **View Progress**: Your selected entries appear with their current progress
 - **Update Progress**: Tap on the `+` button next to an entry to increment the episode/chapter count
-- **Refreshing**: The tile automatically refreshes every minute. You can tap anywhere on the tile to force a refresh
+- **Refreshing**: The tile automatically refreshes every 15 minutes. You can tap anywhere on the tile to force a refresh
 
 ## Libraries used
 
