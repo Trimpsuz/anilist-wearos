@@ -24,10 +24,11 @@ import com.apollographql.apollo.ApolloClient
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.tiles.SuspendingTileService
 import dagger.hilt.android.AndroidEntryPoint
+import dev.trimpsuz.anilist.type.MediaListStatus
 import dev.trimpsuz.anilist.utils.DataStoreRepository
 import dev.trimpsuz.anilist.utils.GlobalVariables
 import dev.trimpsuz.anilist.utils.REFRESH_INTERVAL_TILE
-import dev.trimpsuz.anilist.utils.fetchMediaProgress
+import dev.trimpsuz.anilist.utils.fetchMedia
 import dev.trimpsuz.anilist.utils.firstBlocking
 import dev.trimpsuz.anilist.utils.sendToMobile
 import dev.trimpsuz.anilist.utils.updateMediaProgress
@@ -145,14 +146,43 @@ class MainTileService : SuspendingTileService() {
 
         if (!isLoggedIn) return createTextTile(requestParams, context, "Please log in in the companion app.")
 
-        val selectedMediaIds: List<String> = withContext(Dispatchers.IO) {
+        var selectedMediaIds: List<String> = withContext(Dispatchers.IO) {
             dataStoreRepository.selectedMedia.firstBlocking()?.toList() ?: emptyList()
         }
 
         if(selectedMediaIds.isEmpty()) return createTextTile(requestParams, context, "Please select some entries in the companion app.")
 
-        val mediaMap = withContext(Dispatchers.IO) {
-            fetchMediaProgress(apolloClient, selectedMediaIds.map { it.toInt() })
+        val mediaList = withContext(Dispatchers.IO) {
+            fetchMedia(apolloClient, selectedMediaIds.map { it.toInt() })
+        }
+
+        if (mediaList.isNullOrEmpty()) return createTextTile(requestParams, context, "No media entries returned from the API.")
+
+        val mediaMap = mediaList.associate { media ->
+            val total = media?.episodes ?: media?.chapters
+            val progress = media?.mediaListEntry?.progress
+            val entryId = media?.mediaListEntry?.id
+            (media?.id ?: 0) to Triple(progress, total, entryId)
+        }
+
+        withContext(Dispatchers.IO) {
+            val newSelectedMediaIds = selectedMediaIds.toMutableList()
+            mediaList.forEach { media ->
+                if (media?.mediaListEntry?.status !in listOf(
+                        MediaListStatus.CURRENT,
+                        MediaListStatus.REPEATING
+                    )
+                ) {
+                    newSelectedMediaIds.remove(media?.id.toString())
+                }
+            }
+            selectedMediaIds = newSelectedMediaIds.toList()
+            sendToMobile("list", selectedMediaIds.toString(), applicationContext)
+            dataStoreRepository.setSelectedMedia(selectedMediaIds.toSet())
+            val imageFiles = filesDir.listFiles { file -> file.extension == "png" }
+            imageFiles?.forEach { file ->
+                if (!selectedMediaIds.contains(file.nameWithoutExtension)) file.delete()
+            }
         }
 
         return PrimaryLayout.Builder(requestParams.deviceConfiguration)

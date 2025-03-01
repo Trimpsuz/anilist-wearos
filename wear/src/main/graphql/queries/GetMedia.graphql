@@ -11,6 +11,7 @@ query GetMedia($ids: [Int]) {
           medium
         }
       mediaListEntry {
+		status
 		id
         progress
       }

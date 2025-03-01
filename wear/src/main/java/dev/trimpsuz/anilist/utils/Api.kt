@@ -6,15 +6,10 @@ import dev.trimpsuz.anilist.GetMediaQuery
 import dev.trimpsuz.anilist.SaveMediaListEntryMutation
 import kotlinx.coroutines.runBlocking
 
-fun fetchMediaProgress(apolloClient: ApolloClient, ids: List<Int>): Map<Int, Triple<Int?, Int?, Int?>> = runBlocking {
+suspend fun fetchMedia(apolloClient: ApolloClient, ids: List<Int>): List<GetMediaQuery. Medium?>?  {
     val response = apolloClient.query(GetMediaQuery(Optional.presentIfNotNull(ids))).execute()
 
-    response.data?.Page?.media?.associate { media ->
-        val total = media?.episodes ?: media?.chapters
-        val progress = media?.mediaListEntry?.progress
-        val entryId = media?.mediaListEntry?.id
-        (media?.id ?: 0) to Triple(progress, total, entryId)
-    } ?: emptyMap()
+    return response.data?.Page?.media
 }
 
 fun updateMediaProgress(apolloClient: ApolloClient, entryId: Int, newProgress: Int) = runBlocking {
