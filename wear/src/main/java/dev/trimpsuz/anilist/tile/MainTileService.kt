@@ -51,7 +51,7 @@ class MainTileService : SuspendingTileService() {
 
     override fun onCreate() {
         super.onCreate()
-        globalVariables.accessToken = dataStoreRepository.accessToken.firstBlocking()
+        if(globalVariables.accessToken == null) globalVariables.accessToken = dataStoreRepository.accessToken.firstBlocking()
     }
 
     override suspend fun resourcesRequest(
