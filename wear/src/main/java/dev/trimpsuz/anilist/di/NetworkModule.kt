@@ -61,12 +61,6 @@ object NetworkModule {
     fun provideOkHttpClient(): OkHttpClient {
         return OkHttpClient()
             .newBuilder()
-            .addInterceptor {
-                it.proceed(
-                    it.request().newBuilder()
-                        .build()
-                )
-            }
             .build()
     }
 }
