@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,22 +44,45 @@ import androidx.navigation.NavController
 import dev.trimpsuz.anilist.BuildConfig
 import dev.trimpsuz.anilist.ui.viewModels.MainViewModel
 import dev.trimpsuz.anilist.utils.firstBlocking
+import dev.trimpsuz.anilist.utils.sendToWear
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val viewModel: MainViewModel = hiltViewModel()
     val selectedTheme by viewModel.theme.collectAsStateWithLifecycle(viewModel.theme.firstBlocking())
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle(viewModel.isLoggedIn.firstBlocking())
+    val selectedInterval by viewModel.updateInterval.collectAsStateWithLifecycle(viewModel.updateInterval.firstBlocking())
+
+    val intervalOptions = listOf(
+        "1 minute" to 60 * 1000L,
+        "5 minutes" to 5 * 60 * 1000L,
+        "10 minutes" to 10 * 60 * 1000L,
+        "15 minutes" to 15 * 60 * 1000L,
+        "30 minutes" to 30 * 60 * 1000L,
+        "1 hour" to 60 * 60 * 1000L
+    )
 
     var showThemeDialog by remember { mutableStateOf(false) }
     var showAlert by remember { mutableStateOf(false) }
+    var showIntervalDialog by remember { mutableStateOf(false) }
 
     fun selectTheme(theme: String) {
         viewModel.setTheme(theme)
         showThemeDialog = false
+    }
+
+    fun selectInterval(interval: String) {
+        viewModel.setUpdateInterval(interval)
+        scope.launch(Dispatchers.IO) {
+            sendToWear("interval", interval, context)
+        }
+        showIntervalDialog = false
     }
 
     Scaffold(
@@ -128,6 +153,27 @@ fun SettingsScreen(navController: NavController) {
                     ListItem(
                         headlineContent = {
                             Text(
+                                text = "Wear",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        },
+                        modifier = Modifier
+                            .padding(horizontal = 40.dp)
+                    )
+                }
+                item {
+                    ListItem(
+                        headlineContent = { Text("Tile update interval") },
+                        supportingContent = { Text(intervalOptions.firstOrNull { it.second.toString() == selectedInterval}?.first ?: "15 minutes" )},
+                        modifier = Modifier.clickable { showIntervalDialog = true },
+                        leadingContent = { Icon(Icons.Outlined.Update, contentDescription = null) }
+                    )
+                }
+                item {
+                    ListItem(
+                        headlineContent = {
+                            Text(
                                 text = "Account",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.secondary
@@ -147,6 +193,38 @@ fun SettingsScreen(navController: NavController) {
             }
         }
     }
+
+    if (showIntervalDialog) {
+        AlertDialog(
+            onDismissRequest = { showIntervalDialog = false },
+            title = { Text("Tile update interval") },
+            text = {
+                Column {
+                    intervalOptions.forEach { (label, value) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectInterval(value.toString()) },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = (selectedInterval
+                                    ?: (15 * 60 * 1000L).toString()) == value.toString(),
+                                onClick = { selectInterval(value.toString()) }
+                            )
+                            Text(text = label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showIntervalDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
 
     if (showThemeDialog) {
         AlertDialog(

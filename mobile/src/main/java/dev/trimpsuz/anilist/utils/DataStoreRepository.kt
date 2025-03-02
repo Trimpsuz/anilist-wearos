@@ -33,9 +33,16 @@ class DataStoreRepository @Inject constructor(
         dataStore.setValue(selectedMediaKey, value)
     }
 
+    val updateInterval = dataStore.getValue(updateIntervalKey)
+
+    suspend fun setUpdateInterval(value: String) {
+        dataStore.setValue(updateIntervalKey, value)
+    }
+
     companion object {
         private val accessTokenKey = stringPreferencesKey("accessToken")
         private val themeKey = stringPreferencesKey("theme")
         private val selectedMediaKey = stringSetPreferencesKey("selectedMedia")
+        private val updateIntervalKey = stringPreferencesKey("updateInterval")
     }
 }

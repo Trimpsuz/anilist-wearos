@@ -80,6 +80,13 @@ class MessageListenerService : WearableListenerService() {
                     }
                 }
             }
+            "/interval" -> {
+                serviceScope.launch {
+                    dataStoreRepository.setUpdateInterval(String(messageEvent.data))
+                    globalVariables.REFRESH_INTERVAL_TILE = (String(messageEvent.data).toLong())
+                    TileService.getUpdater(applicationContext).requestUpdate(MainTileService::class.java)
+                }
+            }
         }
     }
 

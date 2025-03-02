@@ -21,6 +21,7 @@ class MainViewModel @Inject constructor(
     val accessToken = dataStoreRepository.accessToken
     val theme = dataStoreRepository.theme
     val isLoggedIn = dataStoreRepository.isLoggedIn
+    val updateInterval = dataStoreRepository.updateInterval
 
     fun setToken(token: String?) {
         globalVariables.accessToken = token
@@ -36,6 +37,12 @@ class MainViewModel @Inject constructor(
     fun setTheme(value: String) {
         viewModelScope.launch {
             dataStoreRepository.setTheme(value)
+        }
+    }
+
+    fun setUpdateInterval(value: String) {
+        viewModelScope.launch {
+            dataStoreRepository.setUpdateInterval(value)
         }
     }
 

@@ -27,7 +27,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.trimpsuz.anilist.type.MediaListStatus
 import dev.trimpsuz.anilist.utils.DataStoreRepository
 import dev.trimpsuz.anilist.utils.GlobalVariables
-import dev.trimpsuz.anilist.utils.REFRESH_INTERVAL_TILE
 import dev.trimpsuz.anilist.utils.fetchMedia
 import dev.trimpsuz.anilist.utils.firstBlocking
 import dev.trimpsuz.anilist.utils.sendToMobile
@@ -52,6 +51,8 @@ class MainTileService : SuspendingTileService() {
     override fun onCreate() {
         super.onCreate()
         if(globalVariables.accessToken == null) globalVariables.accessToken = dataStoreRepository.accessToken.firstBlocking()
+        if(globalVariables.REFRESH_INTERVAL_TILE == null) globalVariables.REFRESH_INTERVAL_TILE =
+            dataStoreRepository.updateInterval.firstBlocking()?.toLong() ?: (15 * 60 * 1000L)
     }
 
     override suspend fun resourcesRequest(
@@ -131,7 +132,7 @@ class MainTileService : SuspendingTileService() {
 
         return TileBuilders.Tile.Builder()
             .setResourcesVersion(globalVariables.RESOURCES_VERSION)
-            .setFreshnessIntervalMillis(REFRESH_INTERVAL_TILE)
+            .setFreshnessIntervalMillis(globalVariables.REFRESH_INTERVAL_TILE ?: (15 * 60 * 1000L))
             .setTileTimeline(
                 TimelineBuilders.Timeline.Builder()
                     .addTimelineEntry(timelineEntry)
