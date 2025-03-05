@@ -3,11 +3,6 @@ package dev.trimpsuz.anilist
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.wear.tiles.TileService
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Optional
 import com.google.android.gms.wearable.MessageEvent
@@ -16,8 +11,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.trimpsuz.anilist.tile.MainTileService
 import dev.trimpsuz.anilist.utils.DataStoreRepository
 import dev.trimpsuz.anilist.utils.GlobalVariables
-import dev.trimpsuz.anilist.utils.UpdateTileWorker
-import dev.trimpsuz.anilist.utils.fetchMedia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +24,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 
@@ -60,23 +52,6 @@ class MessageListenerService : WearableListenerService() {
                 serviceScope.launch {
                     dataStoreRepository.setAccessToken(String(messageEvent.data))
                     globalVariables.accessToken = String(messageEvent.data)
-
-                    val workManager = WorkManager.getInstance(applicationContext)
-
-                    val workRequest = PeriodicWorkRequestBuilder<UpdateTileWorker>(globalVariables.REFRESH_INTERVAL_TILE ?: (15 * 60 * 1000L), TimeUnit.MILLISECONDS)
-                        .setConstraints(
-                            Constraints.Builder()
-                                .setRequiredNetworkType(NetworkType.CONNECTED)
-                                .build()
-                        )
-                        .build()
-
-                    workManager.enqueueUniquePeriodicWork(
-                        "update_tile_worker",
-                        ExistingPeriodicWorkPolicy.KEEP,
-                        workRequest
-                    )
-
                     TileService.getUpdater(applicationContext).requestUpdate(MainTileService::class.java)
                 }
             }
@@ -98,8 +73,6 @@ class MessageListenerService : WearableListenerService() {
                     val downloadSuccess = fetchMediaDetails(selectedMediaIds)
 
                     if (downloadSuccess) {
-                        globalVariables.mediaList = fetchMedia(apolloClient, selectedMediaIds.map { it.toInt() })
-
                         TileService.getUpdater(applicationContext)
                             .requestUpdate(MainTileService::class.java)
                         globalVariables.RESOURCES_VERSION =
@@ -110,23 +83,8 @@ class MessageListenerService : WearableListenerService() {
             "/interval" -> {
                 serviceScope.launch {
                     dataStoreRepository.setUpdateInterval(String(messageEvent.data))
-                    globalVariables.REFRESH_INTERVAL_TILE = String(messageEvent.data).toLong()
-
-                    val workManager = WorkManager.getInstance(applicationContext)
-
-                    val workRequest = PeriodicWorkRequestBuilder<UpdateTileWorker>(String(messageEvent.data).toLong(), TimeUnit.MILLISECONDS)
-                        .setConstraints(
-                            Constraints.Builder()
-                                .setRequiredNetworkType(NetworkType.CONNECTED)
-                                .build()
-                        )
-                        .build()
-
-                    workManager.enqueueUniquePeriodicWork(
-                        "update_tile_worker",
-                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-                        workRequest
-                    )
+                    globalVariables.REFRESH_INTERVAL_TILE = (String(messageEvent.data).toLong())
+                    TileService.getUpdater(applicationContext).requestUpdate(MainTileService::class.java)
                 }
             }
         }

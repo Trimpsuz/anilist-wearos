@@ -27,8 +27,8 @@ android {
         applicationId = appPackageName
         minSdk = 30
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.1.1"
+        versionCode = 3
+        versionName = "1.1.0"
 
     }
 
@@ -83,8 +83,6 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.apollo.runtime)
     implementation(libs.okhttp)
-    implementation(libs.androidx.work)
-    implementation(libs.androidx.hilt.work)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
