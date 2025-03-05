@@ -20,6 +20,11 @@ import androidx.wear.protolayout.material.Typography
 import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.apollographql.apollo.ApolloClient
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.tiles.SuspendingTileService
@@ -27,6 +32,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.trimpsuz.anilist.type.MediaListStatus
 import dev.trimpsuz.anilist.utils.DataStoreRepository
 import dev.trimpsuz.anilist.utils.GlobalVariables
+import dev.trimpsuz.anilist.utils.UpdateTileWorker
 import dev.trimpsuz.anilist.utils.fetchMedia
 import dev.trimpsuz.anilist.utils.firstBlocking
 import dev.trimpsuz.anilist.utils.sendToMobile
@@ -34,6 +40,7 @@ import dev.trimpsuz.anilist.utils.updateMediaProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @OptIn(ExperimentalHorologistApi::class)
@@ -53,6 +60,24 @@ class MainTileService : SuspendingTileService() {
         if(globalVariables.accessToken == null) globalVariables.accessToken = dataStoreRepository.accessToken.firstBlocking()
         if(globalVariables.REFRESH_INTERVAL_TILE == null) globalVariables.REFRESH_INTERVAL_TILE =
             dataStoreRepository.updateInterval.firstBlocking()?.toLong() ?: (15 * 60 * 1000L)
+
+        if(dataStoreRepository.isLoggedIn.firstBlocking()) {
+            val workManager = WorkManager.getInstance(applicationContext)
+
+            val workRequest = PeriodicWorkRequestBuilder<UpdateTileWorker>(globalVariables.REFRESH_INTERVAL_TILE ?: (15 * 60 * 1000L), TimeUnit.MILLISECONDS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+
+            workManager.enqueueUniquePeriodicWork(
+                "update_tile_worker",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+            )
+        }
     }
 
     override suspend fun resourcesRequest(
@@ -122,6 +147,35 @@ class MainTileService : SuspendingTileService() {
             }
         }
 
+        if(listOf("ID_CLICK_ADD", "ID_REFRESH").any {
+            requestParams.currentState.lastClickableId.startsWith(it)
+        }) {
+            withContext(Dispatchers.IO) {
+                var selectedMediaIds = dataStoreRepository.selectedMedia.firstBlocking()?.toList() ?: emptyList()
+                val mediaList = fetchMedia(apolloClient, selectedMediaIds.map { it.toInt() })
+
+                val newSelectedMediaIds = selectedMediaIds.toMutableList()
+                mediaList?.forEach { media ->
+                    if (media?.mediaListEntry?.status !in listOf(
+                            MediaListStatus.CURRENT,
+                            MediaListStatus.REPEATING
+                        )
+                    ) {
+                        newSelectedMediaIds.remove(media?.id.toString())
+                    }
+                }
+                selectedMediaIds = newSelectedMediaIds.toList()
+                sendToMobile("list", selectedMediaIds.toString(), applicationContext)
+                dataStoreRepository.setSelectedMedia(selectedMediaIds.toSet())
+                val imageFiles = filesDir.listFiles { file -> file.extension == "png" }
+                imageFiles?.forEach { file ->
+                    if (!selectedMediaIds.contains(file.nameWithoutExtension)) file.delete()
+                }
+
+                globalVariables.mediaList = mediaList
+            }
+        }
+
         val timelineEntry = TimelineBuilders.TimelineEntry.Builder()
             .setLayout(
                 LayoutElementBuilders.Layout.Builder()
@@ -132,7 +186,6 @@ class MainTileService : SuspendingTileService() {
 
         return TileBuilders.Tile.Builder()
             .setResourcesVersion(globalVariables.RESOURCES_VERSION)
-            .setFreshnessIntervalMillis(globalVariables.REFRESH_INTERVAL_TILE ?: (15 * 60 * 1000L))
             .setTileTimeline(
                 TimelineBuilders.Timeline.Builder()
                     .addTimelineEntry(timelineEntry)
@@ -152,14 +205,19 @@ class MainTileService : SuspendingTileService() {
 
         if (!isLoggedIn) return createTextTile(requestParams, context, "Please log in in the companion app.")
 
-        var selectedMediaIds: List<String> = withContext(Dispatchers.IO) {
+        val selectedMediaIds: List<String> = withContext(Dispatchers.IO) {
             dataStoreRepository.selectedMedia.firstBlocking()?.toList() ?: emptyList()
         }
 
         if(selectedMediaIds.isEmpty()) return createTextTile(requestParams, context, "Please select some entries in the companion app.")
 
-        val mediaList = withContext(Dispatchers.IO) {
-            fetchMedia(apolloClient, selectedMediaIds.map { it.toInt() })
+        var mediaList = globalVariables.mediaList
+
+        if(mediaList == null) {
+            mediaList = withContext(Dispatchers.IO) {
+                fetchMedia(apolloClient, selectedMediaIds.map { it.toInt() })
+            }
+            globalVariables.mediaList = mediaList
         }
 
         if (mediaList.isNullOrEmpty()) return createTextTile(requestParams, context, "No media entries returned from the API.")
@@ -168,26 +226,6 @@ class MainTileService : SuspendingTileService() {
             val total = media?.episodes ?: media?.chapters
             val progress = media?.mediaListEntry?.progress
             (media?.id ?: 0) to Pair(progress, total)
-        }
-
-        withContext(Dispatchers.IO) {
-            val newSelectedMediaIds = selectedMediaIds.toMutableList()
-            mediaList.forEach { media ->
-                if (media?.mediaListEntry?.status !in listOf(
-                        MediaListStatus.CURRENT,
-                        MediaListStatus.REPEATING
-                    )
-                ) {
-                    newSelectedMediaIds.remove(media?.id.toString())
-                }
-            }
-            selectedMediaIds = newSelectedMediaIds.toList()
-            sendToMobile("list", selectedMediaIds.toString(), applicationContext)
-            dataStoreRepository.setSelectedMedia(selectedMediaIds.toSet())
-            val imageFiles = filesDir.listFiles { file -> file.extension == "png" }
-            imageFiles?.forEach { file ->
-                if (!selectedMediaIds.contains(file.nameWithoutExtension)) file.delete()
-            }
         }
 
         return PrimaryLayout.Builder(requestParams.deviceConfiguration)

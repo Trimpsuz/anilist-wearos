@@ -60,9 +60,6 @@ fun SettingsScreen(navController: NavController) {
     val selectedInterval by viewModel.updateInterval.collectAsStateWithLifecycle(viewModel.updateInterval.firstBlocking())
 
     val intervalOptions = listOf(
-        "1 minute" to 60 * 1000L,
-        "5 minutes" to 5 * 60 * 1000L,
-        "10 minutes" to 10 * 60 * 1000L,
         "15 minutes" to 15 * 60 * 1000L,
         "30 minutes" to 30 * 60 * 1000L,
         "1 hour" to 60 * 60 * 1000L

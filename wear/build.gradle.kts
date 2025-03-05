@@ -83,6 +83,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.apollo.runtime)
     implementation(libs.okhttp)
+    implementation(libs.androidx.work)
+    implementation(libs.androidx.hilt.work)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
