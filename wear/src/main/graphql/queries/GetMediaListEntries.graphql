@@ -1,0 +1,21 @@
+query GetMediaListEntries($userId: Int, $statusIn: [MediaListStatus], $type: MediaType, $chunk: Int, $perChunk: Int) {
+  MediaListCollection(userId: $userId, status_in: $statusIn, type: $type, chunk: $chunk, perChunk: $perChunk) {
+    hasNextChunk
+    lists {
+      entries {
+        media {
+		  id
+          title {
+            userPreferred
+          }
+          coverImage {
+            large
+          }
+          chapters
+          episodes
+        }
+        progress
+      }
+    }
+  }
+}

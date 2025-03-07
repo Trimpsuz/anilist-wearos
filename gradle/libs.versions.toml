@@ -20,8 +20,7 @@ tiles = "1.4.1"
 tilesMaterial = "1.4.1"
 tilesTooling = "1.4.1"
 tilesToolingPreview = "1.4.1"
-horologistComposeTools = "0.6.17"
-horologistTiles = "0.6.17"
+horologist = "0.6.17"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
 lifecycleRuntimeKtx = "2.8.7"
 navigationCompose = "2.8.7"
@@ -60,8 +59,8 @@ androidx-tiles = { group = "androidx.wear.tiles", name = "tiles", version.ref = 
 androidx-tiles-material = { group = "androidx.wear.tiles", name = "tiles-material", version.ref = "tilesMaterial" }
 androidx-tiles-tooling = { group = "androidx.wear.tiles", name = "tiles-tooling", version.ref = "tilesTooling" }
 androidx-tiles-tooling-preview = { group = "androidx.wear.tiles", name = "tiles-tooling-preview", version.ref = "tilesToolingPreview" }
-horologist-compose-tools = { group = "com.google.android.horologist", name = "horologist-compose-tools", version.ref = "horologistComposeTools" }
-horologist-tiles = { group = "com.google.android.horologist", name = "horologist-tiles", version.ref = "horologistTiles" }
+horologist-compose-tools = { group = "com.google.android.horologist", name = "horologist-compose-tools", version.ref = "horologist" }
+horologist-tiles = { group = "com.google.android.horologist", name = "horologist-tiles", version.ref = "horologist" }
 androidx-watchface-complications-data-source-ktx = { group = "androidx.wear.watchface", name = "watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
@@ -75,6 +74,7 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 apollo-runtime = { group = "com.apollographql.apollo", name = "apollo-runtime", version.ref = "apollo" }
 glide-compose = { group = "com.github.bumptech.glide", name = "compose", version.ref = "glide" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+horologist-compose-layout = { group = "com.google.android.horologist", name = "horologist-compose-layout", version.ref = "horologist" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
