@@ -44,7 +44,9 @@ class MainActivity : ComponentActivity() {
 
             val startDestination = if (isLoggedIn) "anime" else "home"
 
-            AnilistWearOSTheme {
+            AnilistWearOSTheme(
+                darkTheme = true
+            ) {
                 AppScaffold(timeText = { TimeText() }) {
                     val navController = rememberSwipeDismissableNavController()
 

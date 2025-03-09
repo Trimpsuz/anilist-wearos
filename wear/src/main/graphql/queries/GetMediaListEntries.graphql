@@ -3,13 +3,15 @@ query GetMediaListEntries($userId: Int, $statusIn: [MediaListStatus], $type: Med
     hasNextChunk
     lists {
       entries {
+	    id
+	    status
         media {
 		  id
           title {
             userPreferred
           }
           coverImage {
-            large
+            medium
           }
           chapters
           episodes

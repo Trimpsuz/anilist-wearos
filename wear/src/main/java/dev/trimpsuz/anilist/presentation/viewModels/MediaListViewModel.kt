@@ -8,8 +8,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.trimpsuz.anilist.GetMediaListEntriesQuery
 import dev.trimpsuz.anilist.type.MediaListStatus
 import dev.trimpsuz.anilist.type.MediaType
+import dev.trimpsuz.anilist.utils.fetchMedia
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -90,6 +92,26 @@ class MediaListViewModel @Inject constructor(
                 e.printStackTrace()
             } finally {
                 _isFetchingMore.value = false
+            }
+        }
+    }
+
+    suspend fun updateMediaProgress(mediaId: Int, entryId: Int) {
+        val media = fetchMedia(client, listOf(mediaId))?.get(0)
+        val progress = media?.mediaListEntry?.progress?.plus(1)
+
+        if(progress != null) {
+            dev.trimpsuz.anilist.utils.updateMediaProgress(client, entryId, progress)
+
+            val total: Int? = media.episodes ?: media.chapters
+
+            _mediaList.update { list ->
+                list.map { entry ->
+                    if (entry?.id == entryId) entry.copy(
+                        progress = progress,
+                        status = if (total != null && progress >= total) MediaListStatus.COMPLETED else media.mediaListEntry.status
+                    ) else entry
+                }
             }
         }
     }

@@ -85,6 +85,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.horologist.compose.layout)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.glide.compose)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
