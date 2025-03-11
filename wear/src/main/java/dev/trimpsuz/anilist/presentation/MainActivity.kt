@@ -20,7 +20,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.google.android.horologist.compose.layout.AppScaffold
 import dagger.hilt.android.AndroidEntryPoint
-import dev.trimpsuz.anilist.presentation.screens.AnimeScreen
+import dev.trimpsuz.anilist.presentation.screens.MainScreen
 import dev.trimpsuz.anilist.presentation.theme.AnilistWearOSTheme
 import dev.trimpsuz.anilist.presentation.viewModels.MainViewModel
 import dev.trimpsuz.anilist.utils.firstBlocking
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle(initialIsLoggedIn)
 
-            val startDestination = if (isLoggedIn) "anime" else "home"
+            val startDestination = if (isLoggedIn) "main" else "home"
 
             AnilistWearOSTheme(
                 darkTheme = true
@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        composable("anime") { AnimeScreen() }
+                        composable("main") { MainScreen() }
                     }
                 }
             }
