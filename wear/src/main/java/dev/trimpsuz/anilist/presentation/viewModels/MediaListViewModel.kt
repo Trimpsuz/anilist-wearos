@@ -6,6 +6,7 @@ import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Optional
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.trimpsuz.anilist.GetMediaListEntriesQuery
+import dev.trimpsuz.anilist.type.MediaListSort
 import dev.trimpsuz.anilist.type.MediaListStatus
 import dev.trimpsuz.anilist.type.MediaType
 import dev.trimpsuz.anilist.utils.fetchMedia
@@ -36,7 +37,7 @@ class MediaListViewModel @Inject constructor(
 
     private var currentChunk = 1
 
-    fun fetchMediaList(userId: Int, statusIn: List<MediaListStatus>, type: MediaType) {
+    fun fetchMediaList(userId: Int, statusIn: List<MediaListStatus>, type: MediaType, sort: List<MediaListSort?> = listOf(null)) {
         if (_isLoading.value) return // Prevent multiple simultaneous fetches
 
         viewModelScope.launch {
@@ -49,7 +50,8 @@ class MediaListViewModel @Inject constructor(
                         statusIn = Optional.presentIfNotNull(statusIn),
                         type = Optional.presentIfNotNull(type),
                         chunk = Optional.presentIfNotNull(currentChunk),
-                        perChunk = Optional.presentIfNotNull(perChunk)
+                        perChunk = Optional.presentIfNotNull(perChunk),
+                        sort = Optional.presentIfNotNull(sort)
                     )
                 ).execute()
 
@@ -65,7 +67,7 @@ class MediaListViewModel @Inject constructor(
         }
     }
 
-    fun fetchMoreMediaList(userId: Int, statusIn: List<MediaListStatus>, type: MediaType) {
+    fun fetchMoreMediaList(userId: Int, statusIn: List<MediaListStatus>, type: MediaType, sort: List<MediaListSort?> = listOf(null)) {
         if (_isFetchingMore.value || !_hasNextChunk.value) return // Prevent multiple simultaneous fetches
 
         viewModelScope.launch {
@@ -77,7 +79,8 @@ class MediaListViewModel @Inject constructor(
                         statusIn = Optional.presentIfNotNull(statusIn),
                         type = Optional.presentIfNotNull(type),
                         chunk = Optional.presentIfNotNull(currentChunk),
-                        perChunk = Optional.presentIfNotNull(perChunk)
+                        perChunk = Optional.presentIfNotNull(perChunk),
+                        sort = Optional.presentIfNotNull(sort)
                     )
                 ).execute()
 

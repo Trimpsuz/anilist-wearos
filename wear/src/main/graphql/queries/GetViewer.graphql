@@ -2,5 +2,8 @@ query GetViewer {
   Viewer {
     id
     name
+	options {
+      titleLanguage
+    }
   }
 }

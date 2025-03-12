@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        composable("main") { MainScreen() }
+                        composable("main") { MainScreen(viewModel) }
                     }
                 }
             }

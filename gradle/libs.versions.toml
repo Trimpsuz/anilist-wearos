@@ -75,6 +75,7 @@ apollo-runtime = { group = "com.apollographql.apollo", name = "apollo-runtime", 
 glide-compose = { group = "com.github.bumptech.glide", name = "compose", version.ref = "glide" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 horologist-compose-layout = { group = "com.google.android.horologist", name = "horologist-compose-layout", version.ref = "horologist" }
+horologist-compose-material = { group = "com.google.android.horologist", name = "horologist-compose-material", version.ref = "horologist" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
