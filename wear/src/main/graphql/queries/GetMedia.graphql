@@ -7,14 +7,18 @@ query GetMedia($ids: [Int]) {
       }
       episodes
       chapters
-        coverImage {
+	  coverImage {
           medium
-        }
-      mediaListEntry {
+      }
+	  mediaListEntry {
 		status
 		id
-        progress
-      }
+		progress
+		progressVolumes
+		repeat
+	  }
+      volumes
+	  type
     }
   }
 }

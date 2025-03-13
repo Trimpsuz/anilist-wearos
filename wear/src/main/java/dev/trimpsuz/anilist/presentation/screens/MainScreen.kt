@@ -20,9 +20,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Sort
+import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.PauseCircle
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.PlayCircleOutline
+import androidx.compose.material.icons.outlined.Replay
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Straight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,8 +53,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,6 +71,7 @@ import com.google.android.horologist.compose.material.AlertDialog
 import dev.trimpsuz.anilist.presentation.composables.ListItem
 import dev.trimpsuz.anilist.presentation.viewModels.MainViewModel
 import dev.trimpsuz.anilist.presentation.viewModels.MediaListViewModel
+import dev.trimpsuz.anilist.presentation.viewModels.MediaViewModel
 import dev.trimpsuz.anilist.presentation.viewModels.ViewerViewModel
 import dev.trimpsuz.anilist.type.MediaListSort
 import dev.trimpsuz.anilist.type.MediaListStatus
@@ -76,6 +90,7 @@ fun MainScreen(
     viewerViewModel: ViewerViewModel = hiltViewModel(),
     animeListViewModel: MediaListViewModel = hiltViewModel(key = "anime"),
     mangaListViewModel: MediaListViewModel = hiltViewModel(key = "manga"),
+    mediaViewModel: MediaViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
 
@@ -100,6 +115,22 @@ fun MainScreen(
     val mangaHasNextChunk by mangaListViewModel.hasNextChunk.collectAsState()
     val mangaIsFetchingMore by mangaListViewModel.isFetchingMore.collectAsState()
     val mangaList by mangaListViewModel.mediaList.collectAsState()
+
+    val media by mediaViewModel.media.collectAsState()
+
+    var status: MediaListStatus? by remember { mutableStateOf(null) }
+    var progress: Int? by remember { mutableStateOf(null) }
+    var progressVolumes: Int? by remember { mutableStateOf(null) }
+    var repeat: Int? by remember { mutableStateOf(null) }
+
+    LaunchedEffect(media) {
+        media?.let {
+            status = media?.mediaListEntry?.status
+            progress = media?.mediaListEntry?.progress
+            progressVolumes = media?.mediaListEntry?.progressVolumes
+            repeat = media?.mediaListEntry?.repeat
+        }
+    }
 
     var selectedStatus by remember { mutableStateOf(mainViewModel.filterStatus.firstBlocking() ?: "Current") }
 
@@ -365,13 +396,17 @@ fun MainScreen(
                 if(selected == "anime") {
                     items(animeList) { entry ->
                         entry?.let {
-                            ListItem(entry, animeListViewModel)
+                            ListItem(entry, animeListViewModel) { id ->
+                                mediaViewModel.fetchMedia(id)
+                            }
                         }
                     }
                 } else if(selected == "manga") {
                     items(mangaList) { entry ->
                         entry?.let {
-                            ListItem(entry, mangaListViewModel)
+                            ListItem(entry, mangaListViewModel) { id ->
+                                mediaViewModel.fetchMedia(id)
+                            }
                         }
                     }
                 }
@@ -389,6 +424,491 @@ fun MainScreen(
                     containerColor = MaterialTheme.colorScheme.surface,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+            }
+        }
+
+        media?.let {
+            AlertDialog(
+                showDialog = true,
+                onDismiss = {
+                    mediaViewModel.resetMedia()
+                    status = null
+                    progress = null
+                    progressVolumes = null
+                    repeat = null
+                },
+                title = "Edit entry"
+            ) {
+                item {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(
+                            4.dp,
+                            alignment = Alignment.CenterHorizontally
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        listOf(
+                            MediaListStatus.CURRENT to Icons.Outlined.PlayCircleOutline,
+                            MediaListStatus.PLANNING to Icons.Outlined.Schedule,
+                            MediaListStatus.COMPLETED to Icons.Outlined.CheckCircle,
+                            MediaListStatus.DROPPED to Icons.Outlined.DeleteOutline,
+                            MediaListStatus.PAUSED to Icons.Outlined.PauseCircle,
+                            MediaListStatus.REPEATING to Icons.Outlined.Replay,
+                        ).forEach {
+                            Box(
+                                modifier = Modifier
+                                    .clickable {
+                                        status = it.first
+                                    }
+                                    .background(
+                                        color = if(it.first == status) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.surface,
+                                        shape = RoundedCornerShape(
+                                            100.dp,
+                                        )
+                                    )
+                                    .padding(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = it.second,
+                                    contentDescription = null,
+                                    tint = if(it.first == status) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                if(media?.type == MediaType.MANGA) {
+                    item {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Book,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = buildAnnotatedString {
+                                        progress?.let { progress ->
+                                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
+                                                append("${if (progress > 0) progress else 0}")
+                                            }
+                                            append(media?.chapters?.let { "/$it" } ?: "")
+                                        } ?: append(media?.chapters?.let { "0/$it" } ?: "0")
+                                    },
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clickable {
+                                            if((progress ?: 0) > 0) progress = progress?.minus(1)
+                                        }
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surface,
+                                            shape = RoundedCornerShape(
+                                                100.dp,
+                                            )
+                                        )
+                                        .padding(
+                                            vertical = 6.dp,
+                                            horizontal = 10.dp
+                                        )
+                                ) {
+                                    Text(
+                                        text = "−",
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clickable {
+                                            if((progress ?: 0) < (media?.chapters ?: Int.MAX_VALUE)) progress = progress?.plus(1)
+                                        }
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surface,
+                                            shape = RoundedCornerShape(
+                                                100.dp,
+                                            )
+                                        )
+                                        .padding(
+                                            vertical = 6.dp,
+                                            horizontal = 10.dp
+                                        )
+                                ) {
+                                    Text(
+                                        text = "+",
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    item {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.BookmarkBorder,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = buildAnnotatedString {
+                                        progressVolumes?.let { progress ->
+                                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
+                                                append("${if (progress > 0) progress else 0}")
+                                            }
+                                            append(media?.volumes?.let { "/$it" } ?: "")
+                                        } ?: append(media?.volumes?.let { "0/$it" } ?: "0")
+                                    },
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clickable {
+                                            if((progressVolumes ?: 0) > 0) progressVolumes = progressVolumes?.minus(1)
+                                        }
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surface,
+                                            shape = RoundedCornerShape(
+                                                100.dp,
+                                            )
+                                        )
+                                        .padding(
+                                            vertical = 6.dp,
+                                            horizontal = 10.dp
+                                        )
+                                ) {
+                                    Text(
+                                        text = "−",
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clickable {
+                                            if((progressVolumes ?: 0) < (media?.volumes ?: Int.MAX_VALUE)) progressVolumes = progressVolumes?.plus(1)
+                                        }
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surface,
+                                            shape = RoundedCornerShape(
+                                                100.dp,
+                                            )
+                                        )
+                                        .padding(
+                                            vertical = 6.dp,
+                                            horizontal = 10.dp
+                                        )
+                                ) {
+                                    Text(
+                                        text = "+",
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(media?.type == MediaType.ANIME) {
+                    item {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.PlayArrow,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = buildAnnotatedString {
+                                        progress?.let { progress ->
+                                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
+                                                append("${if (progress > 0) progress else 0}")
+                                            }
+                                            append(media?.episodes?.let { "/$it" } ?: "")
+                                        } ?: append(media?.episodes?.let { "0/$it" } ?: "0")
+                                    },
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clickable {
+                                            if((progress ?: 0) > 0) progress = progress?.minus(1)
+                                        }
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surface,
+                                            shape = RoundedCornerShape(
+                                                100.dp,
+                                            )
+                                        )
+                                        .padding(
+                                            vertical = 6.dp,
+                                            horizontal = 10.dp
+                                        )
+                                ) {
+                                    Text(
+                                        text = "−",
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clickable {
+                                            if((progress ?: 0) < (media?.episodes ?: Int.MAX_VALUE)) progress = progress?.plus(1)
+                                        }
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surface,
+                                            shape = RoundedCornerShape(
+                                                100.dp,
+                                            )
+                                        )
+                                        .padding(
+                                            vertical = 6.dp,
+                                            horizontal = 10.dp
+                                        )
+                                ) {
+                                    Text(
+                                        text = "+",
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Replay,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "${repeat ?: 0}",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clickable {
+                                        if((repeat ?: 0) > 0) repeat = repeat?.minus(1)
+                                    }
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface,
+                                        shape = RoundedCornerShape(
+                                            100.dp,
+                                        )
+                                    )
+                                    .padding(
+                                        vertical = 6.dp,
+                                        horizontal = 10.dp
+                                    )
+                            ) {
+                                Text(
+                                    text = "−",
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clickable {
+                                        repeat = repeat?.plus(1)
+                                    }
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface,
+                                        shape = RoundedCornerShape(
+                                            100.dp,
+                                        )
+                                    )
+                                    .padding(
+                                        vertical = 6.dp,
+                                        horizontal = 10.dp
+                                    )
+                            ) {
+                                Text(
+                                    text = "+",
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                item {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(
+                            8.dp,
+                            alignment = Alignment.CenterHorizontally
+                        ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clickable {
+                                    mediaViewModel.resetMedia()
+                                    status = null
+                                    progress = null
+                                    progressVolumes = null
+                                    repeat = null
+                                }
+                                .background(
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    shape = RoundedCornerShape(
+                                        100.dp,
+                                    )
+                                )
+                                .padding(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Close,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondary
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clickable {
+                                    scope.launch(Dispatchers.IO) {
+                                        mediaViewModel.updateMedia(
+                                            media?.mediaListEntry?.id,
+                                            status,
+                                            progress,
+                                            progressVolumes,
+                                            repeat
+                                        )
+
+                                        mediaViewModel.resetMedia()
+                                        status = null
+                                        progress = null
+                                        progressVolumes = null
+                                        repeat = null
+
+                                        viewer?.id?.let {
+                                            if(selected == "anime") {
+                                                animeListViewModel.fetchMediaList(
+                                                    userId = it,
+                                                    statusIn = selectedStatusesList,
+                                                    type = MediaType.ANIME,
+                                                    sort = sort
+                                                )
+                                            } else if(selected == "manga") {
+                                                mangaListViewModel.fetchMediaList(
+                                                    userId = it,
+                                                    statusIn = selectedStatusesList,
+                                                    type = MediaType.MANGA,
+                                                    sort = sort
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = RoundedCornerShape(
+                                        100.dp,
+                                    )
+                                )
+                                .padding(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -424,7 +944,11 @@ fun MainScreen(
 
             item {
                 FlowRow(
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(
+                        4.dp,
+                        alignment = Alignment.CenterHorizontally
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -494,7 +1018,10 @@ fun MainScreen(
 
             item {
                 FlowRow(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    horizontalArrangement = Arrangement.spacedBy(
+                        4.dp,
+                        alignment = Alignment.CenterHorizontally
+                    ),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .fillMaxWidth()

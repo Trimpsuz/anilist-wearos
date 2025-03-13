@@ -48,11 +48,20 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun ListItem(entry: GetMediaListEntriesQuery.Entry, mediaListViewModel: MediaListViewModel) {
+fun ListItem(
+    entry: GetMediaListEntriesQuery.Entry,
+    mediaListViewModel: MediaListViewModel,
+    onClick: (Int) -> Unit
+) {
     val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
+            .clickable{
+                entry.media?.id?.let {
+                    onClick(it)
+                }
+            }
             .background(
                 color = MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(

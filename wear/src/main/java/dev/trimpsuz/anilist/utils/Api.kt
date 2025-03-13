@@ -5,7 +5,7 @@ import com.apollographql.apollo.api.Optional
 import dev.trimpsuz.anilist.GetMediaQuery
 import dev.trimpsuz.anilist.SaveMediaListEntryMutation
 
-suspend fun fetchMedia(apolloClient: ApolloClient, ids: List<Int>): List<GetMediaQuery. Medium?>? {
+suspend fun fetchMedia(apolloClient: ApolloClient, ids: List<Int>): List<GetMediaQuery.Medium?>? {
     val response = apolloClient.query(GetMediaQuery(Optional.presentIfNotNull(ids))).execute()
 
     return response.data?.Page?.media
@@ -15,6 +15,7 @@ suspend fun updateMediaProgress(apolloClient: ApolloClient, entryId: Int, newPro
     val response = apolloClient.mutation(
         SaveMediaListEntryMutation(
             Optional.present(entryId),
+            Optional.absent(),
             Optional.present(newProgress)
         )
     ).execute()
