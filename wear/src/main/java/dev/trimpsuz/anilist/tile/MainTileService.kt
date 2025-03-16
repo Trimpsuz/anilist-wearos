@@ -458,13 +458,24 @@ class MainTileService : SuspendingTileService() {
         return PrimaryLayout.Builder(requestParams.deviceConfiguration)
             .setResponsiveContentInsetEnabled(true)
             .setContent(
-                Text.Builder(context, message)
-                    .setMaxLines(3)
-                    .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
-                    .setTypography(Typography.TYPOGRAPHY_CAPTION1)
-                    .setColor(argb(Colors.DEFAULT.onSurface))
-                    .build()
-            )
-            .build()
+                LayoutElementBuilders.Box.Builder()
+                    .addContent(
+                        Text.Builder(context, message)
+                            .setMaxLines(3)
+                            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE)
+                            .setTypography(Typography.TYPOGRAPHY_CAPTION1)
+                            .setColor(argb(Colors.DEFAULT.onSurface))
+                            .build()
+                    )
+                    .setModifiers(
+                        ModifiersBuilders.Modifiers.Builder()
+                            .setClickable(
+                                Clickable.Builder().setId("ID_REFRESH").setOnClick(
+                                    ActionBuilders.LoadAction.Builder().build()
+                                ).build()
+                            )
+                            .build()
+                    ).build()
+            ).build()
     }
 }
