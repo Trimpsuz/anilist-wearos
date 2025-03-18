@@ -138,7 +138,7 @@ fun MainScreen(
         when(selectedStatus) {
             "Current" -> listOf(MediaListStatus.CURRENT, MediaListStatus.REPEATING)
             "Unfinished" -> listOf(MediaListStatus.CURRENT, MediaListStatus.REPEATING, MediaListStatus.PLANNING, MediaListStatus.PAUSED)
-            else -> listOf(MediaListStatus.CURRENT, MediaListStatus.REPEATING, MediaListStatus.PLANNING, MediaListStatus.PAUSED, MediaListStatus.DROPPED)
+            else -> listOf(MediaListStatus.CURRENT, MediaListStatus.REPEATING, MediaListStatus.PLANNING, MediaListStatus.PAUSED, MediaListStatus.DROPPED, MediaListStatus.COMPLETED)
         }
     }
 
@@ -195,7 +195,7 @@ fun MainScreen(
         selectedStatusesList = when(selectedStatus) {
             "Current" -> listOf(MediaListStatus.CURRENT, MediaListStatus.REPEATING)
             "Unfinished" -> listOf(MediaListStatus.CURRENT, MediaListStatus.REPEATING, MediaListStatus.PLANNING, MediaListStatus.PAUSED)
-            else -> listOf(MediaListStatus.CURRENT, MediaListStatus.REPEATING, MediaListStatus.PLANNING, MediaListStatus.PAUSED, MediaListStatus.DROPPED)
+            else -> listOf(MediaListStatus.CURRENT, MediaListStatus.REPEATING, MediaListStatus.PLANNING, MediaListStatus.PAUSED, MediaListStatus.DROPPED, MediaListStatus.COMPLETED)
         }
 
         viewer?.id?.let {
