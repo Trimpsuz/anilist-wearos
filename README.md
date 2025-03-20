@@ -12,27 +12,13 @@ An unofficial [AniList](https://anilist.co/) client for WearOS devices.
 
 ##
 
-<table style="width: 100%; table-layout: auto;">
-    <tbody>
-        <tr style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center;">
-            <td style="padding: 5px; display: flex; justify-content: center; align-items: center; height: 220px;">
-                <img style="height: 180px; max-width: 100%;" src="https://img.trimpsuz.dev/i/tpaq6.png" />
-            </td>
-            <td style="padding: 5px; display: flex; justify-content: center; align-items: center; height: 220px;">
-                <img style="height: 180px; max-width: 100%;" src="https://img.trimpsuz.dev/i/8ay5h.png" />
-            </td>
-            <td style="padding: 5px; display: flex; justify-content: center; align-items: center; height: 220px;">
-                <img style="height: 210px; max-width: 100%;" src="https://img.trimpsuz.dev/i/z0fg5.png" />
-            </td>
-            <td style="padding: 5px; display: flex; justify-content: center; align-items: center; height: 220px;">
-                <img style="height: 210px; max-width: 100%;" src="https://img.trimpsuz.dev/i/wdzvp.png" />
-            </td>
-            <td style="padding: 5px; display: flex; justify-content: center; align-items: center; height: 220px;">
-                <img style="height: 210px; max-width: 100%;" src="https://img.trimpsuz.dev/i/tfr2p.png" />
-            </td>
-        </tr>
-    </tbody>
-</table>
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0; border-collapse: collapse;">
+    <img style="padding: 8px; height: 210px; width: auto; max-width: 100%; object-fit: contain; object-position: center;" src="https://img.trimpsuz.dev/i/tpaq6.png" />
+    <img style="padding: 8px; height: 210px; width: auto; max-width: 100%; object-fit: contain; object-position: center;" src="https://img.trimpsuz.dev/i/8ay5h.png" />
+    <img style="padding: 8px; height: 210px; width: auto; max-width: 100%; object-fit: contain; object-position: center;" src="https://img.trimpsuz.dev/i/z0fg5.png" />
+    <img style="padding: 8px; height: 210px; width: auto; max-width: 100%; object-fit: contain; object-position: center;" src="https://img.trimpsuz.dev/i/wdzvp.png" />
+    <img style="padding: 8px; height: 210px; width: auto; max-width: 100%; object-fit: contain; object-position: center;" src="https://img.trimpsuz.dev/i/tfr2p.png" />
+</div>
 
 ## Features
 
