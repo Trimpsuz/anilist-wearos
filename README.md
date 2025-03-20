@@ -1,5 +1,5 @@
-<h1 style="display: flex; align-items: center; gap: 10px;">
-  <img height="50px" src="https://github.com/Trimpsuz/anilist-wearos/blob/master/mobile/src/main/res/mipmap-hdpi/ic_launcher_round.webp" />
+<h1>
+  <img src="https://github.com/Trimpsuz/anilist-wearos/blob/master/mobile/src/main/res/mipmap-hdpi/ic_launcher_round.webp" height="50" align="center" />
   AniList WearOS
 </h1>
 
