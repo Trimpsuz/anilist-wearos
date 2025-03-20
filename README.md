@@ -15,11 +15,11 @@ An unofficial [AniList](https://anilist.co/) client for WearOS devices.
 <table>
     <tbody>
         <tr>
-            <td><img height="210px" src="https://img.trimpsuz.dev/i/tpaq6.png" /></td>
-            <td><img height="210px" src="https://img.trimpsuz.dev/i/8ay5h.png" /></td>
-            <td><img height="240px" src="https://img.trimpsuz.dev/i/z0fg5.png" /></td>
-            <td><img height="240px" src="https://img.trimpsuz.dev/i/wdzvp.png" /></td>
-            <td><img height="240px" src="https://img.trimpsuz.dev/i/tfr2p.png" /></td>
+            <td><img height="180px" src="https://img.trimpsuz.dev/i/tpaq6.png" /></td>
+            <td><img height="180px" src="https://img.trimpsuz.dev/i/8ay5h.png" /></td>
+            <td><img height="210px" src="https://img.trimpsuz.dev/i/z0fg5.png" /></td>
+            <td><img height="210px" src="https://img.trimpsuz.dev/i/wdzvp.png" /></td>
+            <td><img height="210px" src="https://img.trimpsuz.dev/i/tfr2p.png" /></td>
         </tr>
     </tbody>
 </table>
