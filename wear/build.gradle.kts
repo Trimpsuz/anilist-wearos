@@ -27,8 +27,8 @@ android {
         applicationId = appPackageName
         minSdk = 30
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.2.3"
+        versionCode = 8
+        versionName = "1.2.4"
 
     }
 
