@@ -106,7 +106,7 @@ class MediaListViewModel @Inject constructor(
         if(progress != null) {
             val total: Int? = media.episodes ?: media.chapters
 
-            if(total != null && progress < total) {
+            if(total == null || progress < total) {
                 val newProgress = progress.plus(1)
 
                 dev.trimpsuz.anilist.utils.updateMediaProgress(client, entryId, newProgress)
@@ -115,7 +115,7 @@ class MediaListViewModel @Inject constructor(
                     list.map { entry ->
                         if (entry?.id == entryId) entry.copy(
                             progress = newProgress,
-                            status = if (newProgress >= total) MediaListStatus.COMPLETED else media.mediaListEntry.status
+                            status = if (total != null && newProgress >= total) MediaListStatus.COMPLETED else media.mediaListEntry.status
                         ) else entry
                     }
                 }
