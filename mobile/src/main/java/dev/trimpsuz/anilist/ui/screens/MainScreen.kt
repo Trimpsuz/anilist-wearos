@@ -70,7 +70,7 @@ fun MainScreen(
             val filteredSelectedMediaIds = selectedMediaIds.let { ids ->
                 val statusMap = mediaStatusViewModel.fetchMediaStatuses(ids)
                 ids.filter { mediaId ->
-                    statusMap[mediaId] == MediaListStatus.CURRENT
+                    statusMap[mediaId] == MediaListStatus.CURRENT || statusMap[mediaId] == MediaListStatus.REPEATING
                 }.toSet()
             }
 
